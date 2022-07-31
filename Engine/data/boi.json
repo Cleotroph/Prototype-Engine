@@ -1,0 +1,17 @@
+{
+  "resources": [
+    {
+      "name": "boi",
+      "sources": [
+        {
+          "type": "LINE",
+          "x": 0,
+          "y": 0,
+          "height": 32,
+          "width": 32,
+          "count": 8
+        }
+      ]
+    }
+  ]
+}

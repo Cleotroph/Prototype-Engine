@@ -1,0 +1,1 @@
+Minimalist engine built on top of processing. Meant as a prototype for a future OpenGL based engine.

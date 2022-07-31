@@ -1,0 +1,25 @@
+{
+    "resources": [
+      {
+        "name": "nums",
+        "sources": [
+            {
+                "type": "SOLO",
+                "x": 16,
+                "y": 48,
+                "height": 16,
+                "width": 16
+            },
+            {
+                "type": "GRID",
+                "x": 0,
+                "y": 0,
+                "height": 16,
+                "width": 16,
+                "row": 3,
+                "col": 3
+            }
+        ]
+      }
+    ]
+  }
