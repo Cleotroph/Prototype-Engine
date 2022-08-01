@@ -4,10 +4,7 @@ PImage test;
 void setup(){
   size(400,400,P2D);
   initLog();
-  initDefaultLogger();
-  clearAllListeners();
-  
-  
+  initDefaultLogger();; 
   atlasLoader.splitAtlas("data", "boi", spells);
   CycleAnimator spellAnim = new CycleAnimator(spells.get("boi").getAnimFrameSet(250), true);
   spell = new Sprite(spellAnim);
@@ -17,10 +14,11 @@ void setup(){
   ((PGraphicsOpenGL)g).textureSampling(3); // Enables noSmooth for images -- Doesn't work on text??? try not to scale vectors - set scale to 0 while drawing
   frameRate(1000);
   
-  registerListener(new MousePressedListener(){
-    public void onMousePressed(){
-      spell.animator.refresh();
-    }
+  ActiveInputManager.registerListener(
+    new MousePressedListener(){
+      public void onMousePressed(){
+        spell.animator.refresh();
+      }
   });
 }
 
