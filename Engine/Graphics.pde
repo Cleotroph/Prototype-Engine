@@ -1,57 +1,37 @@
-// Highest level drawable
-// anchored - specifies either UI locked or global offset driven.
-// Layer specifies the level at which to draw. Defaults to 0 and drawn in a undefined order
-// x and y can be modified directly, drawX and drawY should be accessed only during draw and not modified.
-public abstract class Graphic {
-  int drawX;
-  int drawY;
-  int x;
-  int y;
-  boolean anchored;
-  int layer;
-  boolean enabled;
-  void disable(){
-    enabled = false;  
-  }
-  void enable(){
-    enabled = true;  
-  }
-  void move(int x, int y){
-    this.x = x;
-    this.y = y;
-  }
-  void renderGraphic(){
-    if(enabled){
-      render();  
-    }
-  }
-  abstract void render();
+// mod:core
+
+// Low level drawable, used to contain anything renderable, it is up to the user to de-duplicate resources
+public interface Graphic {
+  void render(Vec2 pos);
 }
+
+// A no-draw graphic used as the nullable type for sprites.
+public class EmptyGraphic implements Graphic {
+  void render(Vec2 pos){}
+}
+
 
 // Simple PImage container - can receive a texture from a set or as a source image
-public class Texture extends Graphic {
+public class TextureGraphic implements Graphic {
   PImage source;
-  Texture(PImage source){
+  TextureGraphic(PImage source){
     this.source = source;
   }
-  Texture(TextureSet set){
-    this.source = set.getTex();  
-  }
-  Texture(TextureSet set, int index){
+  TextureGraphic(TextureSet set, int index){
     this.source = set.getTex(index);  
   }
-  void render(){
-    image(source, x, y);
+  void render(Vec2 pos){
+    image(source, pos.x, pos.y);
   }
 }
 
+// A collection of textures
+// Usually returned by a scanner/generator such as the deatlasing utility.
+// Ordered by scan/generation order.
 public class TextureSet {
   PImage[] source;
   TextureSet(int size){
     source = new PImage[size];  
-  }
-  PImage getTex(){
-    return source[0];
   }
   PImage getTex(int index){
     return source[index];
@@ -59,14 +39,21 @@ public class TextureSet {
   Graphic[] getFrameSet(){
     Graphic[] out = new Graphic[source.length];
     for(int i = 0; i < source.length; i++){
-      out[i] = new Texture(source[i]);
+      out[i] = new TextureGraphic(source[i]);
     }
     return out;
   }
   AnimationFrame[] getAnimFrameSet(int duration){
     AnimationFrame[] out = new AnimationFrame[source.length];
     for(int i = 0; i < source.length; i++){
-      out[i] = new AnimationFrame(new Texture(source[i]), duration);  
+      out[i] = new AnimationFrame(new TextureGraphic(source[i]), duration);  
+    }
+    return out;
+  }
+  AnimationFrame[] getAnimFrameSet(int[] durations){
+    AnimationFrame[] out = new AnimationFrame[source.length];
+    for(int i = 0; i < source.length; i++){
+      out[i] = new AnimationFrame(new TextureGraphic(source[i]), durations[i]);  
     }
     return out;
   }

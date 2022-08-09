@@ -1,3 +1,13 @@
+// mod:core
+
+/* Data Containers */
+class Vec2 {
+  float x, y;
+  Vec2(float x, float y){
+    this.x = x;
+    this.y = y;
+  }
+}
 
 /* LOGGING */
 ArrayList<LogOutput> loggers;
@@ -23,6 +33,18 @@ void initDefaultLogger(){
 
 void registerLogger(LogOutput out){
   loggers.add(out);
+}
+
+void logI(String identifier, String s){
+  log(identifier, LOGTYPE.INFO, s);
+}
+
+void logW(String identifier, String s){
+  log(identifier, LOGTYPE.WARN, s);
+}
+
+void logE(String identifier, String s){
+  log(identifier, LOGTYPE.ERROR, s);
 }
 
 void log(String identifier, LOGTYPE type, String s){

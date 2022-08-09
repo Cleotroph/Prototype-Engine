@@ -4,9 +4,9 @@ PImage test;
 void setup(){
   size(400,400,P2D);
   initLog();
-  initDefaultLogger();; 
-  atlasLoader.splitAtlas("data", "boi", spells);
-  CycleAnimator spellAnim = new CycleAnimator(spells.get("boi").getAnimFrameSet(250), true);
+  initDefaultLogger();
+  atlasLoader.splitAtlas("data", "MinifolksUndead/MiniLichSpell", spells);
+  CycleAnimator spellAnim = new CycleAnimator(spells.get("spell").getAnimFrameSet(250), true);
   spell = new Sprite(spellAnim);
   test = loadImage("data/MinifolksUndead/MiniLichSpell.png");
   
@@ -29,7 +29,7 @@ void draw(){
   text(frameRate, 0, 10);
   spell.render();
   //image(spells.get("nums").getTex(15), 50, 50);
-  spell.move(mouseX / 5 - 8, mouseY / 5 - 8);
+  spell.setPosition(mouseX / 5 - 8, mouseY / 5 - 8);
   /*for(int i = 0; i < 10000; i++){
     image(test, 0, 0);
   }*/

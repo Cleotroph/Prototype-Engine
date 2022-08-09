@@ -1,3 +1,4 @@
+// mod:core
 // Notes on using AnimationControllers -
 // * It's recommended you only use the high level animators:
 //   ~ CycleAnimator
@@ -6,7 +7,7 @@
 //    the animation provider polls the current state (via time or a state observer method)
 //    the animator changes it's provider if needed
 // * Animation resetting is up to the user if it doesn't occur when a state changes.
-//    this can be done via calling refresh() or flagRefresh() on the state animator
+//    this can be done via calling refresh()
 
 // This can be used to build animators
 static class AnimationFactory{
@@ -16,16 +17,19 @@ static class AnimationFactory{
 }
 
 // Highest level animator, specifies a generic graphic provider
-abstract class AnimationController {
-  abstract Graphic provideFrame();
-  abstract void refresh();
+interface AnimationController {
+  Graphic provideFrame();
+  void refresh();
 }
 
 // This is a container for any static states in the AnimationStateContainer
 // i.e. use this when one state is a static graphic instead of an animation
 // Don't use this to draw static graphics otherwise, use a Graphic
-class StaticAnimator extends AnimationController {
+class StaticAnimator implements AnimationController {
   Graphic content;
+  StaticAnimator(Graphic g){
+    this.content = g;  
+  }
   Graphic provideFrame(){
     return content;  
   }
@@ -35,7 +39,7 @@ class StaticAnimator extends AnimationController {
 // Simple animator which cycles through provided frames in given order with specified frame duration.
 // If possible, these should be constructed during loading phases and recycled.
 // looped boolean defines whether or not to repeat the animation on completion - The idle is the frame in the tail position
-public class CycleAnimator extends AnimationController {
+public class CycleAnimator implements AnimationController {
   boolean looped;
   int frame;
   int lastMS;
@@ -73,7 +77,7 @@ class AnimationFrame {
 }
 
 // More complicated Animator which requests a state to move between cycled animations
-public abstract class StateAnimator extends AnimationController {
+public abstract class StateAnimator implements AnimationController {
   int lastState = -1;
   abstract int getState();
   AnimationStateContainer[] providers;
@@ -103,80 +107,86 @@ class AnimationStateContainer {
     }
   }
 }
-
-// Sprite serves as an animation container. This is very important as it
-// dynamically updates the position of graphics
-public class Sprite extends Graphic {
+// mod:core
+// Lowest level container for a positional object.
+// Contains a single graphic (provider) which is drawn at the sprite's position
+// Position is passed by pointer so positions can be shared/inherited.
+class Sprite {
+  Vec2 pos;
   AnimationController animator;
+  
+  Sprite(){
+    setPositionProvider(new Vec2(0, 0));
+    setAnimationSonctroller(new StaticAnimator(new EmptyGraphic()));
+  }
+  Sprite(Vec2 positionProvider){
+    setPositionProvider(positionProvider);
+    setAnimationSonctroller(new StaticAnimator(new EmptyGraphic()));
+  }
+  Sprite(Graphic g){
+    setPositionProvider(new Vec2(0, 0));
+    setAnimationSonctroller(new StaticAnimator(g));
+  }
   Sprite(AnimationController animator){
-    this.animator = animator;
+    setPositionProvider(new Vec2(0, 0));
+    setAnimationSonctroller(animator);
+  }
+  Sprite(Vec2 positionProvider, Graphic g){
+    setPositionProvider(positionProvider);
+    setAnimationSonctroller(new StaticAnimator(g));
+  }
+  Sprite(Vec2 positionProvider, AnimationController animator){
+    setPositionProvider(positionProvider);
+    setAnimationSonctroller(animator);
+  }
+  
+  void setPositionProvider(Vec2 provider){
+    this.pos = provider;
+  }
+  void setAnimationSonctroller(AnimationController animator){
+    this.animator = animator;  
+  }
+  void setPosition(float x, float y){
+    pos.x = x;
+    pos.y = y;
   }
   void render(){
-    Graphic frame = animator.provideFrame();
-    frame.move(x, y);
-    frame.render();
+    animator.provideFrame().render(pos);  
   }
 }
-public class Entity{
-  int posX;
-  int posY;
-  boolean gravity;
-  
+// mod:core
+// Low level drawable, used to contain anything renderable, it is up to the user to de-duplicate resources
+public interface Graphic {
+  void render(Vec2 pos);
 }
-// Highest level drawable
-// anchored - specifies either UI locked or global offset driven.
-// Layer specifies the level at which to draw. Defaults to 0 and drawn in a undefined order
-// x and y can be modified directly, drawX and drawY should be accessed only during draw and not modified.
-public abstract class Graphic {
-  int drawX;
-  int drawY;
-  int x;
-  int y;
-  boolean anchored;
-  int layer;
-  boolean enabled;
-  void disable(){
-    enabled = false;  
-  }
-  void enable(){
-    enabled = true;  
-  }
-  void move(int x, int y){
-    this.x = x;
-    this.y = y;
-  }
-  void renderGraphic(){
-    if(enabled){
-      render();  
-    }
-  }
-  abstract void render();
+
+// A no-draw graphic used as the nullable type for sprites.
+public class EmptyGraphic implements Graphic {
+  void render(Vec2 pos){}
 }
+
 
 // Simple PImage container - can receive a texture from a set or as a source image
-public class Texture extends Graphic {
+public class TextureGraphic implements Graphic {
   PImage source;
-  Texture(PImage source){
+  TextureGraphic(PImage source){
     this.source = source;
   }
-  Texture(TextureSet set){
-    this.source = set.getTex();  
-  }
-  Texture(TextureSet set, int index){
+  TextureGraphic(TextureSet set, int index){
     this.source = set.getTex(index);  
   }
-  void render(){
-    image(source, x, y);
+  void render(Vec2 pos){
+    image(source, pos.x, pos.y);
   }
 }
 
+// A collection of textures
+// Usually returned by a scanner/generator such as the deatlasing utility.
+// Ordered by scan/generation order.
 public class TextureSet {
   PImage[] source;
   TextureSet(int size){
     source = new PImage[size];  
-  }
-  PImage getTex(){
-    return source[0];
   }
   PImage getTex(int index){
     return source[index];
@@ -184,14 +194,21 @@ public class TextureSet {
   Graphic[] getFrameSet(){
     Graphic[] out = new Graphic[source.length];
     for(int i = 0; i < source.length; i++){
-      out[i] = new Texture(source[i]);
+      out[i] = new TextureGraphic(source[i]);
     }
     return out;
   }
   AnimationFrame[] getAnimFrameSet(int duration){
     AnimationFrame[] out = new AnimationFrame[source.length];
     for(int i = 0; i < source.length; i++){
-      out[i] = new AnimationFrame(new Texture(source[i]), duration);  
+      out[i] = new AnimationFrame(new TextureGraphic(source[i]), duration);  
+    }
+    return out;
+  }
+  AnimationFrame[] getAnimFrameSet(int[] durations){
+    AnimationFrame[] out = new AnimationFrame[source.length];
+    for(int i = 0; i < source.length; i++){
+      out[i] = new AnimationFrame(new TextureGraphic(source[i]), durations[i]);  
     }
     return out;
   }
@@ -297,135 +314,186 @@ class AtlasLoader {
     }
   }
 }
-ArrayList<MouseClickedListener> mouseClickedListeners;
-ArrayList<MousePressedListener> mousePressedListeners;
-ArrayList<MouseReleasedListener> mouseReleasedListeners;
-ArrayList<KeyPressedListener> keyPressedListeners;
-ArrayList<KeyReleasedListener> keyReleasedListeners;
-ArrayList<MouseScrollListener> mouseScrollListeners;
+// mod:core
+// defines a generic registry with a user defined key and value.
+// designed to be built at init and then subsequently finalized to be unmodifiable.
+class Registry<K, T> {
+  boolean finalized = false;
+  HashMap<K, T> entries;
+  Registry(){
+    entries = new HashMap<K, T>();
+  }
+  void finalize(){
+    finalized = true;
+    logI("Registry<"+", "+">", "Registered " + entries.size() + " items.");
+  }
+  void register(T entry, K id){
+    if(!finalized){
+      entries.put(id, entry);
+    }else{
+      // TODO: Throw illegal modification exception
+      //throw new Exception();  
+      println("illegalModification");
+      exit();
+    }
+  }
+}
+// mod:core
+InputManager ActiveInputManager = new InputManager();
 
 
-void mouseClicked(){
-  for(MouseClickedListener listener : mouseClickedListeners){
-    listener.onMouseClicked();  
+// Container for user-input event listeners
+// yeah what he said
+// 
+public class InputManager {
+
+  ArrayList<MouseClickedListener> mouseClickedListeners;
+  ArrayList<MousePressedListener> mousePressedListeners;
+  ArrayList<MouseReleasedListener> mouseReleasedListeners;
+  ArrayList<KeyPressedListener> keyPressedListeners;
+  ArrayList<KeyReleasedListener> keyReleasedListeners;
+  ArrayList<MouseScrollListener> mouseScrollListeners;
+
+  public InputManager() {
+    this.clearAllListeners();
+  }
+
+  void registerListener(MouseClickedListener listener) {
+    mouseClickedListeners.add(listener);
+  }
+
+  void registerListener(MousePressedListener listener) {
+    mousePressedListeners.add(listener);
+  }
+
+  void registerListener(MouseReleasedListener listener) {
+    mouseReleasedListeners.add(listener);
+  }
+
+  void registerListener(KeyPressedListener listener) {
+    keyPressedListeners.add(listener);
+  }
+
+  void registerListener(KeyReleasedListener listener) {
+    keyReleasedListeners.add(listener);
+  }
+
+  void registerListener(MouseScrollListener listener) {
+    mouseScrollListeners.add(listener);
+  }
+
+
+
+  void clearAllListeners() {
+    clearMouseClickedListeners();
+    clearMousePressedListeners();
+    clearMouseReleasedListeners();
+    clearKeyPressedListeners();
+    clearKeyReleasedListeners();
+    clearMouseScrollListeners();
+  }
+
+  void clearMouseClickedListeners() {
+    mouseClickedListeners = new ArrayList<MouseClickedListener>();
+  }
+
+  void clearMousePressedListeners() {
+    mousePressedListeners = new ArrayList<MousePressedListener>();
+  }
+
+  void clearMouseReleasedListeners() {
+    mouseReleasedListeners = new ArrayList<MouseReleasedListener>();
+  }
+
+  void clearKeyPressedListeners() {
+    keyPressedListeners = new ArrayList<KeyPressedListener>();
+  }
+
+  void clearKeyReleasedListeners() {
+    keyReleasedListeners = new ArrayList<KeyReleasedListener>();
+  }
+
+  void clearMouseScrollListeners() {
+    mouseScrollListeners = new ArrayList<MouseScrollListener>();
   }
 }
 
-void mousePressed(){
-  for(MousePressedListener listener : mousePressedListeners){
-    listener.onMousePressed();  
+
+
+
+// built in processing methods
+void mouseClicked() {
+  for (MouseClickedListener listener : ActiveInputManager.mouseClickedListeners) {
+    listener.onMouseClicked();
   }
 }
 
-void mouseReleased(){
-  for(MouseReleasedListener listener : mouseReleasedListeners){
-    listener.onMouseReleased();  
+void mousePressed() {
+  for (MousePressedListener listener : ActiveInputManager.mousePressedListeners) {
+    listener.onMousePressed();
   }
 }
 
-void keyPressed(){
-  for(KeyPressedListener listener : keyPressedListeners){
-    listener.onKeyPressed();  
+void mouseReleased() {
+  for (MouseReleasedListener listener : ActiveInputManager.mouseReleasedListeners) {
+    listener.onMouseReleased();
   }
 }
 
-void keyReleased(){
-  for(KeyReleasedListener listener : keyReleasedListeners){
-    listener.onKeyReleased();  
+void keyPressed() {
+  for (KeyPressedListener listener : ActiveInputManager.keyPressedListeners) {
+    listener.onKeyPressed();
   }
 }
 
-void mouseWheel(MouseEvent event){
-  for(MouseScrollListener listener : mouseScrollListeners){
-    listener.onMouseScroll(event.getCount());  
+void keyReleased() {
+  for (KeyReleasedListener listener : ActiveInputManager.keyReleasedListeners) {
+    listener.onKeyReleased();
   }
 }
 
-
-
-void registerListener(MouseClickedListener listener){
-  mouseClickedListeners.add(listener);
+void mouseWheel(MouseEvent event) {
+  for (MouseScrollListener listener : ActiveInputManager.mouseScrollListeners) {
+    listener.onMouseScroll(event.getCount());
+  }
 }
 
-void registerListener(MousePressedListener listener){
-  mousePressedListeners.add(listener);
-}
+// interfaces
+  interface MouseClickedListener {
+    void onMouseClicked();
+  }
 
-void registerListener(MouseReleasedListener listener){
-  mouseReleasedListeners.add(listener);
-}
+  interface MousePressedListener {
+    void onMousePressed();
+  }
 
-void registerListener(KeyPressedListener listener){
-  keyPressedListeners.add(listener);
-}
+  abstract class mousedPressedListener {
+    abstract void onmousePressed();
+  }
 
-void registerListener(KeyReleasedListener listener){
- keyReleasedListeners.add(listener);
-}
+  interface MouseReleasedListener {
+    void onMouseReleased();
+  }
 
-void registerListener(MouseScrollListener listener){
-  mouseScrollListeners.add(listener);  
-}
+  interface KeyPressedListener {
+    void onKeyPressed();
+  }
 
+  interface KeyReleasedListener {
+    void onKeyReleased();
+  }
 
-
-void clearAllListeners(){
-  clearMouseClickedListeners();
-  clearMousePressedListeners();
-  clearMouseReleasedListeners();
-  clearKeyPressedListeners();
-  clearKeyReleasedListeners();
-  clearMouseScrollListeners();
-}
-
-void clearMouseClickedListeners(){
-  mouseClickedListeners = new ArrayList<MouseClickedListener>();  
-}
-
-void clearMousePressedListeners(){
-  mousePressedListeners = new ArrayList<MousePressedListener>();  
-}
-
-void clearMouseReleasedListeners(){
-  mouseReleasedListeners = new ArrayList<MouseReleasedListener>();  
-}
-
-void clearKeyPressedListeners(){
-  keyPressedListeners = new ArrayList<KeyPressedListener>();  
-}
-
-void clearKeyReleasedListeners(){
-  keyReleasedListeners = new ArrayList<KeyReleasedListener>();  
-}
-
-void clearMouseScrollListeners(){
-  mouseScrollListeners = new ArrayList<MouseScrollListener>();  
-}
-
-
-
-interface MouseClickedListener{
-  void onMouseClicked();
-}
-
-interface MousePressedListener{
-  void onMousePressed();
-}
-
-interface MouseReleasedListener{
-  void onMouseReleased();
-}
-
-interface KeyPressedListener{
-  void onKeyPressed();
-}
-
-interface KeyReleasedListener{
-  void onKeyReleased();
-}
-
-interface MouseScrollListener{
-  void onMouseScroll(int count);
+  interface MouseScrollListener {
+    void onMouseScroll(int count);
+  }
+// mod:core
+/* Data Containers */
+class Vec2 {
+  float x, y;
+  Vec2(float x, float y){
+    this.x = x;
+    this.y = y;
+  }
 }
 
 /* LOGGING */
@@ -452,6 +520,18 @@ void initDefaultLogger(){
 
 void registerLogger(LogOutput out){
   loggers.add(out);
+}
+
+void logI(String identifier, String s){
+  log(identifier, LOGTYPE.INFO, s);
+}
+
+void logW(String identifier, String s){
+  log(identifier, LOGTYPE.WARN, s);
+}
+
+void logE(String identifier, String s){
+  log(identifier, LOGTYPE.ERROR, s);
 }
 
 void log(String identifier, LOGTYPE type, String s){

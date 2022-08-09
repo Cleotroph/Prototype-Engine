@@ -1,8 +1,6 @@
+// mod:core
+
 InputManager ActiveInputManager = new InputManager();
-
-
-
-
 
 
 // Container for user-input event listeners
