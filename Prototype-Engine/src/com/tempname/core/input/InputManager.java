@@ -6,12 +6,12 @@ import java.util.ArrayList;
 
 public class InputManager {
 
-    ArrayList<MouseClickedListener> mouseClickedListeners;
-    ArrayList<MousePressedListener> mousePressedListeners;
-    ArrayList<MouseReleasedListener> mouseReleasedListeners;
-    ArrayList<KeyPressedListener> keyPressedListeners;
-    ArrayList<KeyReleasedListener> keyReleasedListeners;
-    ArrayList<MouseScrollListener> mouseScrollListeners;
+    public ArrayList<MouseClickedListener> mouseClickedListeners;
+    public ArrayList<MousePressedListener> mousePressedListeners;
+    public ArrayList<MouseReleasedListener> mouseReleasedListeners;
+    public ArrayList<KeyPressedListener> keyPressedListeners;
+    public ArrayList<KeyReleasedListener> keyReleasedListeners;
+    public ArrayList<MouseScrollListener> mouseScrollListeners;
 
     public InputManager() {
         this.clearAllListeners();
