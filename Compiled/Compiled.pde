@@ -338,6 +338,10 @@ class Registry<K, T> {
     }
   }
 }
+// mod:tile
+class Tile {
+  
+}
 // mod:core
 InputManager ActiveInputManager = new InputManager();
 
