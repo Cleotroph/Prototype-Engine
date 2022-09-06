@@ -13,7 +13,7 @@ public class Texture extends Graphic {
     Texture(TextureSet set, int index){
         this.source = set.getTex(index);
     }
-    void render(){
+    public void render(){
         image(source, x, y);
     }
 }

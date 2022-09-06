@@ -11,7 +11,7 @@ import java.util.HashMap;
 // anchored - specifies either UI locked or global offset driven.
 // Layer specifies the level at which to draw. Defaults to 0 and drawn in a undefined order
 // x and y can be modified directly, drawX and drawY should be accessed only during draw and not modified.
-public abstract class Graphic extends PApplet {
+public abstract class Graphic {
     int drawX;
     int drawY;
     int x;
@@ -25,7 +25,7 @@ public abstract class Graphic extends PApplet {
     void enable(){
         enabled = true;
     }
-    void move(int x, int y){
+    public void move(int x, int y){
         this.x = x;
         this.y = y;
     }
@@ -34,7 +34,7 @@ public abstract class Graphic extends PApplet {
             render();
         }
     }
-    protected abstract void render();
+    public abstract void render();
 }
 
 

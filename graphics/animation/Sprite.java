@@ -9,9 +9,9 @@ public class Sprite extends Graphic {
     Sprite(AnimationController animator){
         this.animator = animator;
     }
-    void render(){
+    public void render(){
         Graphic frame = animator.provideFrame();
-        frame.move(x, y);
+        //frame.move(x, y);
         frame.render();
     }
 }
