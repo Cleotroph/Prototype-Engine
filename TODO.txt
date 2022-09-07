@@ -1,22 +1,27 @@
 Engine TODO -- 
-	Graphic Refactors: 
+	[X] Graphic Refactors: 
 		[X] Refactor position control for graphics
-		[] Refactor position control for animation controllers - (graphic inherits pointer)
-	Atlasing Utils: 
+		[X] Refactor position control for animation controllers - (graphic inherits pointer)
+	[ ] Atlasing Utils:
 		[] Better management of deatlased sprites
 		[] Tile factory
 		[] Animation JSON loader
 		[] Better animation factory
-	Universal Resource Identifier Registry:
-		[] Build general registry class
+	[ ] Universal Resource Identifier Registry:
+		[X] Build general registry class
 		[] Build concrete texture registry
-	Tilemap Graphic:
+	[ ] Tilemap Graphic:
 		[] Build a tilemap graphic where tiles are drawn by non-instanced providers 
 			(follows registry model?)
-	Refactor InputManager:
+	[ ] Refactor InputManager:
 		[] Better comments, helper functions
 		[] Cleanup
-	Composite JSON factory:
+	[ ] Composite JSON factory:
 		[] Load universal JSONs
 		[] Direct different object to different utilities
 		[] Automatically register to different resource registries according to a key
+	[X] Add modules to compiler:
+		[X] Flag on line 1 of files, map to dictionary
+	[ ] Add screen management utilities
+		[] Use rectangles rather than clipping so clip can be used by drawables freely
+		[] Configurable methods for unusual screen sizes 

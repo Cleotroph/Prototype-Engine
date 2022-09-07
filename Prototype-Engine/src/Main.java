@@ -19,7 +19,7 @@ public class Main extends PApplet {
             t1.d = 0.69;
             t1.f = 1.69f;
             t1.s = "NO?";
-            t1.arr = new int[] {2, 3, 4};
+            t1.arr = new int[] {'a', 'b', 'c'};
 
             byte[] buf = Serializer.Serialize(t1);
             Test t2 = Serializer.Deserialize(buf, Test.class);
